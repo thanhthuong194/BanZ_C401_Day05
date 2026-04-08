@@ -1,4 +1,4 @@
-# SPEC draft — NhomXX-Room
+# SPEC draft — Bàn Z-C401
 
 ## Track: Track A - VinFast (AI chatbot hỗ trợ mua xe, phân tích review)
 
