@@ -20,19 +20,25 @@ from tools.search_tools import search_youtube_reviews, search_reddit_comments
 # Bọc @tool để LangChain tự sinh JSON schema cho Qwen
 @tool
 def tool_search_youtube_reviews(car_model: str) -> str:
-    """Tìm kiếm video review xe trên YouTube. Trả về tiêu đề, mô tả và Nguồn (URL). Phải trích dẫn URL."""
+    """
+    CHỈ SỬ DỤNG khi người dùng MỘT CÁCH RÕ RÀNG yêu cầu xem "video", "clip", "review" hoặc đánh giá từ các "reviewer",
+    KHÔNG SỬ DỤNG tool này nếu người dùng hỏi về trải nghiệm thực tế về một khía cạnh nào đó hoặc bình luận text.
+    Trả về tiêu đề, mô tả và Nguồn (URL).
+    """
     return search_youtube_reviews(car_model)
 
 @tool
 def tool_search_reddit_comments(car_model: str, specific_query: str) -> str:
-    """Tìm kiếm bình luận, thảo luận thực tế của người dùng trên Reddit về một khía cạnh cụ thể của xe."""
+    """
+    CHỈ SỬ DỤNG khi người dùng muốn biết "ý kiến", "cảm nhận", "bình luận", "lỗi" từ "người dùng thực tế" đang lái xe.
+    KHÔNG SỬ DỤNG tool này để tìm video.
+    Trả về các thread thảo luận và Nguồn (URL).
+    """
     return search_reddit_comments(car_model, specific_query)
 
 # Danh sách công cụ cấp cho Agent
 tools = [tool_search_youtube_reviews, tool_search_reddit_comments]
 
-# --- BƯỚC 2: CẤU HÌNH LLM QWEN ---
-# Sử dụng LangChain OpenAI client trỏ vào endpoint của Qwen (Ví dụ: DashScope API)
 QWEN_API_KEY = os.getenv("QWEN_API_KEY")
 llm = ChatOpenAI(
     model="qwen3.5-flash", # Thay bằng qwen-plus hoặc model 3.6 cụ thể bạn đang có
@@ -98,9 +104,6 @@ def chat_loop():
 
         # Thêm câu hỏi của user vào state
         current_state["messages"].append(HumanMessage(content=user_input))
-
-        # Chạy Graph
-        print("\n⏳ Agent đang suy nghĩ (và kiểm tra tool)...")
         
         # Dùng stream để dễ dàng theo dõi log từng node
         for event in agent.stream(current_state):
@@ -112,16 +115,14 @@ def chat_loop():
                     print("-" * 40)
                     print(f"🛠️  [LOG] LLM QUYẾT ĐỊNH GỌI TOOL:")
                     for tc in latest_message.tool_calls:
-                        print(f"    👉 Tool name: {tc['name']}")
-                        print(f"    👉 Arguments: {json.dumps(tc['args'], ensure_ascii=False)}")
+                        print(f"    Tool name: {tc['name']}")
+                        print(f"    Arguments: {json.dumps(tc['args'], ensure_ascii=False)}")
                     print("-" * 40)
 
                 # LOG: In ra câu trả lời cuối cùng của Agent
                 elif isinstance(latest_message, AIMessage) and not latest_message.tool_calls:
                     print(f"🤖 Agent: {latest_message.content}")
 
-        # Cập nhật lại state cho lượt chat tiếp theo
-        # (LangGraph tự động append message vào list, ta không cần gán lại toàn bộ current_state)
 
 if __name__ == "__main__":
     chat_loop()
