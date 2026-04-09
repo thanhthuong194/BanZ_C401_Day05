@@ -10,9 +10,37 @@ from urllib import error, request
 
 
 HEADING_LINK_PATTERN = re.compile(
-    r"^\s{0,3}#{1,6}\s+\[([^\]]+)\]\((https?://[^\s\)]+)\)",
+    r"^\s{0,3}#{1,6}\s+\[([^\]]+)\]\((https?://[^\s\)]+)(?:\s+['\"][^'\"]*['\"])?\)",
     re.IGNORECASE,
 )
+
+
+def load_dotenv(dotenv_path: Path) -> None:
+    if not dotenv_path.exists():
+        return
+
+    for raw_line in dotenv_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+
+        if line.startswith("export "):
+            line = line[7:].strip()
+
+        if "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+
+        if not key:
+            continue
+
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1]
+
+        os.environ.setdefault(key, value)
 
 
 def slugify(text: str) -> str:
@@ -22,7 +50,7 @@ def slugify(text: str) -> str:
     return slug or "unknown"
 
 
-def parse_heading_links(md_path: Path) -> List[Dict[str, str]]:
+def parse_heading_links(md_path: Path, dedupe_url: bool = False) -> List[Dict[str, str]]:
     content = md_path.read_text(encoding="utf-8")
     vehicles: List[Dict[str, str]] = []
     seen_urls = set()
@@ -35,9 +63,10 @@ def parse_heading_links(md_path: Path) -> List[Dict[str, str]]:
         name = match.group(1).strip()
         url = match.group(2).strip()
 
-        if url in seen_urls:
-            continue
-        seen_urls.add(url)
+        if dedupe_url:
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
 
         vehicles.append({"name": name, "url": url})
 
@@ -125,10 +154,18 @@ def main() -> int:
         default=120,
         help="Timeout seconds for each API request (default: 120)",
     )
+    parser.add_argument(
+        "--dedupe-url",
+        action="store_true",
+        help="Only keep unique URLs (default: keep all heading links)",
+    )
 
     args = parser.parse_args()
 
     base_dir = Path(__file__).resolve().parent
+    project_root = base_dir.parent
+    load_dotenv(project_root / ".env")
+
     raw_dir = base_dir / "raw"
     input_path = raw_dir / args.input
     output_dir = raw_dir / args.out_dir
@@ -140,10 +177,10 @@ def main() -> int:
 
     api_key = os.getenv("FIRECRAWL_API_KEY")
     if not api_key:
-        print("Missing FIRECRAWL_API_KEY in environment.")
+        print("Missing FIRECRAWL_API_KEY. Please set it in environment or .env file.")
         return 1
 
-    vehicles = parse_heading_links(input_path)
+    vehicles = parse_heading_links(input_path, dedupe_url=args.dedupe_url)
     if not vehicles:
         print(f"No heading links found in {input_path}")
         return 1
@@ -151,10 +188,16 @@ def main() -> int:
     manifest: List[Dict] = []
     success_count = 0
 
+    slug_counts: Dict[str, int] = {}
     for index, vehicle in enumerate(vehicles, start=1):
         name = vehicle["name"]
         url = vehicle["url"]
         slug = slugify(name)
+
+        slug_counts[slug] = slug_counts.get(slug, 0) + 1
+        if slug_counts[slug] > 1:
+            slug = f"{slug}__{slug_counts[slug]}"
+
         file_path = output_dir / f"{slug}.json"
 
         print(f"[{index}/{len(vehicles)}] Scraping: {name} -> {url}")
