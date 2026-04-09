@@ -15,7 +15,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # --- BƯỚC 1: IMPORT HÀM TÌM KIẾM TỪ FILE TOOLS ---
 # Giả sử bạn đã lưu code ở câu trước vào agent/tools/search_tools.py
-from tools.search_tools import search_youtube_reviews, search_reddit_comments
+from tools.search_tools import search_youtube_reviews, search_reddit_comments, search_vinfast_showrooms
 
 # Bọc @tool để LangChain tự sinh JSON schema cho Qwen
 @tool
@@ -36,8 +36,17 @@ def tool_search_reddit_comments(car_model: str, specific_query: str) -> str:
     """
     return search_reddit_comments(car_model, specific_query)
 
+@tool
+def tool_search_vinfast_showrooms(location: str) -> str:
+    """
+    CHỈ SỬ DỤNG khi người dùng muốn biết địa điểm mua xe, tìm showroom, đại lý VinFast, địa chỉ hoặc số hotline.
+    Tham số 'location': Tên Tỉnh/Thành phố hoặc Quận/Huyện (VD: 'Hà Nội', 'Quận 1'). 
+    Nếu người dùng CHƯA CUNG CẤP vị trí trong câu hỏi, hãy truyền vào một chuỗi rỗng "".
+    Trả về thông tin Tên showroom, vị trí, hotline.
+    """
+    return search_vinfast_showrooms(location)
 # Danh sách công cụ cấp cho Agent
-tools = [tool_search_youtube_reviews, tool_search_reddit_comments]
+tools = [tool_search_youtube_reviews, tool_search_reddit_comments, tool_search_vinfast_showrooms]
 
 QWEN_API_KEY = os.getenv("QWEN_API_KEY")
 llm = ChatOpenAI(
