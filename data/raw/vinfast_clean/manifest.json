@@ -14,7 +14,7 @@
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_fadil_2026.json",
       "output_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_clean\\vinfast_fadil_2026.json",
       "car_model": "Fadil",
-      "spec_categories": 21
+      "spec_categories": 7
     },
     {
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_herio_green_2026.json",
@@ -32,13 +32,13 @@
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_lux_a2_0_2026.json",
       "output_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_clean\\vinfast_lux_a2_0_2026.json",
       "car_model": "Lux A2.0",
-      "spec_categories": 21
+      "spec_categories": 7
     },
     {
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_lux_sa2_0_2026.json",
       "output_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_clean\\vinfast_lux_sa2_0_2026.json",
       "car_model": "Lux SA2.0",
-      "spec_categories": 21
+      "spec_categories": 7
     },
     {
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_nerio_green_2026.json",
@@ -50,7 +50,7 @@
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_president_2026.json",
       "output_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_clean\\vinfast_president_2026.json",
       "car_model": "President",
-      "spec_categories": 0
+      "spec_categories": 7
     },
     {
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_vf_3_2026.json",
@@ -74,31 +74,31 @@
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_vf_6_2026.json",
       "output_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_clean\\vinfast_vf_6_2026.json",
       "car_model": "VF 6",
-      "spec_categories": 14
+      "spec_categories": 7
     },
     {
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_vf_7_2026.json",
       "output_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_clean\\vinfast_vf_7_2026.json",
       "car_model": "VF 7",
-      "spec_categories": 21
+      "spec_categories": 7
     },
     {
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_vf_8_2026.json",
       "output_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_clean\\vinfast_vf_8_2026.json",
       "car_model": "VF 8",
-      "spec_categories": 14
+      "spec_categories": 7
     },
     {
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_vf_8_2026__2.json",
       "output_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_clean\\vinfast_vf_8_2026__2.json",
       "car_model": "VF 8",
-      "spec_categories": 14
+      "spec_categories": 7
     },
     {
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_vf_9_2026.json",
       "output_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_clean\\vinfast_vf_9_2026.json",
       "car_model": "VF 9",
-      "spec_categories": 12
+      "spec_categories": 6
     },
     {
       "source_file": "G:\\code_file\\python\\assignments\\lab5\\BanZ_C401_Day05\\data\\raw\\vinfast_specs\\vinfast_vf_e34_2026.json",

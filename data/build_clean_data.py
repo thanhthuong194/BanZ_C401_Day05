@@ -4,7 +4,7 @@ import re
 import unicodedata
 from html import unescape
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 TAG_PATTERN = re.compile(r"<[^>]+>")
@@ -18,6 +18,25 @@ def clean_text(text: str) -> str:
     text = unescape(strip_tags(text))
     text = re.sub(r"\s+", " ", text)
     return text.strip()
+
+
+def normalize_attribute_value(key: str, value: str) -> str:
+    val = clean_text(value)
+    key_fold = ascii_fold(key)
+
+    if val in {"-", "--", "N/A", "n/a", "None", "null"}:
+        return ""
+
+    if val == "1":
+        return "Có"
+    if val == "0":
+        # In scraped V-Car data, 0/1 is used as false/true for many flags.
+        return "Không"
+
+    if key_fold == "cam bien lui" and val in {"co", "khong"}:
+        return "Có" if val == "co" else "Không"
+
+    return val
 
 
 def ascii_fold(text: str) -> str:
@@ -130,47 +149,92 @@ def extract_segment_from_markdown(md: str) -> str:
     return ""
 
 
-def parse_specs_from_html(html: str) -> List[Dict[str, Any]]:
-    section = re.search(
-        r'<div class="list-collaps[^\"]*"[^>]*>(.*?)</div>\s*</div>\s*<div class="slidebar-right">',
-        html,
-        flags=re.S,
+def extract_version_id_from_url(spec_url: str) -> Optional[str]:
+    match = re.search(r"-(\d+)$", spec_url.strip())
+    if match:
+        return match.group(1)
+    return None
+
+
+def extract_version_blocks(html: str) -> List[Tuple[str, str]]:
+    # Returns list of (version_id, html_slice_for_that_version)
+    starts = list(
+        re.finditer(
+            r'<div class="list-collaps[^\"]*list-version-infor[^\"]*"[^>]*data-version-id="(\d+)"[^>]*>',
+            html,
+            flags=re.S,
+        )
     )
-    if not section:
+    if not starts:
         return []
 
-    body = section.group(1)
-    category_blocks = re.findall(
-        r'<li class="collaps[^\"]*">\s*<div class="collapsed">(.*?)</div>\s*<div class="collapse"[^>]*>\s*<ul>(.*?)</ul>\s*</div>\s*</li>',
-        body,
-        flags=re.S,
-    )
+    blocks: List[Tuple[str, str]] = []
+    right_bar_idx = html.find('<div class="slidebar-right"')
+
+    for idx, match in enumerate(starts):
+        version_id = match.group(1)
+        start_pos = match.start()
+
+        if idx + 1 < len(starts):
+            end_pos = starts[idx + 1].start()
+        elif right_bar_idx != -1 and right_bar_idx > start_pos:
+            end_pos = right_bar_idx
+        else:
+            end_pos = len(html)
+
+        blocks.append((version_id, html[start_pos:end_pos]))
+
+    return blocks
+
+
+def parse_specs_from_html(html: str, spec_url: str = "") -> List[Dict[str, Any]]:
+    target_version_id = extract_version_id_from_url(spec_url) if spec_url else None
+    version_blocks = extract_version_blocks(html)
+
+    selected_blocks: List[str] = []
+    if version_blocks:
+        if target_version_id:
+            selected_blocks = [block for version_id, block in version_blocks if version_id == target_version_id]
+        if not selected_blocks:
+            selected_blocks = [version_blocks[0][1]]
+    else:
+        selected_blocks = [html]
 
     specs: List[Dict[str, Any]] = []
-    for category_raw, rows_html in category_blocks:
-        category = clean_text(category_raw)
-        attributes: Dict[str, str] = {}
+    seen_categories = set()
 
-        rows = re.findall(
-            r'<li>\s*<div class="td1">\s*<b>(.*?)</b>\s*</div>\s*<div class="td2">(.*?)</div>\s*</li>',
-            rows_html,
+    for body in selected_blocks:
+        category_blocks = re.findall(
+            r'<li class="collaps[^\"]*">\s*<div class="collapsed">(.*?)</div>\s*<div class="collapse"[^>]*>\s*<ul>(.*?)</ul>\s*</div>\s*</li>',
+            body,
             flags=re.S,
         )
 
-        for key_raw, value_raw in rows:
-            key = clean_text(key_raw)
-            value: str
-            if "#check" in value_raw:
-                value = "Có"
-            elif "#cancel" in value_raw:
-                value = "Không"
-            else:
-                value = clean_text(value_raw)
+        for category_raw, rows_html in category_blocks:
+            category = clean_text(category_raw)
+            attributes: Dict[str, str] = {}
 
-            attributes[key] = value
+            rows = re.findall(
+                r'<li>\s*<div class="td1">\s*<b>(.*?)</b>\s*</div>\s*<div class="td2">(.*?)</div>\s*</li>',
+                rows_html,
+                flags=re.S,
+            )
 
-        if category and attributes:
-            specs.append({"category": category, "attributes": attributes})
+            for key_raw, value_raw in rows:
+                key = clean_text(key_raw)
+                value: str
+                if "#check" in value_raw:
+                    value = "Có"
+                elif "#cancel" in value_raw:
+                    value = "Không"
+                else:
+                    value = normalize_attribute_value(key, value_raw)
+
+                attributes[key] = value
+
+            if category and attributes and category not in seen_categories:
+                specs.append({"category": category, "attributes": attributes})
+                seen_categories.add(category)
 
     return specs
 
@@ -178,6 +242,7 @@ def parse_specs_from_html(html: str) -> List[Dict[str, Any]]:
 def build_clean_record(spec_doc: Dict[str, Any]) -> Dict[str, Any]:
     name = spec_doc.get("name", "")
     source_url = spec_doc.get("source_url", "")
+    spec_url = spec_doc.get("spec_url", "")
     source_file = spec_doc.get("source_file", "")
 
     firecrawl_data = (spec_doc.get("firecrawl") or {}).get("data") or {}
@@ -209,7 +274,7 @@ def build_clean_record(spec_doc: Dict[str, Any]) -> Dict[str, Any]:
         "vehicle_type": car_type,
         "origin": origin,
         "segment": segment,
-        "specifications": parse_specs_from_html(html),
+        "specifications": parse_specs_from_html(html, spec_url=spec_url),
     }
 
 
