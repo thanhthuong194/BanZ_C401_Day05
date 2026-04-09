@@ -61,3 +61,28 @@ def search_reddit_comments(car_model: str, specific_query: str) -> str:
     for item in results:
         formatted += f"- Chủ đề: {item.get('title')}\n  Nội dung: {item.get('description')}\n  Nguồn (URL): {item.get('url')}\n\n"
     return formatted
+
+def search_vinfast_showrooms(location: str) -> str:
+    """
+    Tool tìm kiếm Showroom, đại lý VinFast.
+    """
+    # Nếu không có location cụ thể, tìm kiếm chung. Nếu có, ghép vào chuỗi tìm kiếm.
+    loc_query = f"tại {location}" if location and location.strip() else "gần nhất"
+    query = f"Showroom đại lý VinFast {loc_query} địa chỉ số điện thoại hotline giá bán"
+    
+    data = _call_brave_api(query, count=4)
+    
+    if "error" in data:
+        return f"Lỗi khi tìm kiếm Showroom: {data['error']}"
+        
+    results = data.get("web", {}).get("results", [])
+    if not results:
+        return f"Không tìm thấy thông tin Showroom nào {loc_query}."
+    
+    formatted = f"Kết quả tìm kiếm Showroom VinFast {loc_query}:\n"
+    for item in results:
+        formatted += f"- Tên trang/Đại lý: {item.get('title')}\n"
+        formatted += f"  Thông tin (Địa chỉ/Hotline/Giá): {item.get('description')}\n"
+        formatted += f"  Nguồn (URL): {item.get('url')}\n\n"
+        
+    return formatted
